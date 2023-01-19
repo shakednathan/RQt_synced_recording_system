@@ -1,0 +1,5 @@
+<launch>
+    <arg name="sensors_topics" default="camera camera_comp lidar ins" />
+    <node name="sensors_synchronizer" pkg="sensors_synchronizer" type="sensors_synchronizer.py" args="$(arg sensors_topics)" output="screen" />
+</launch>
+
