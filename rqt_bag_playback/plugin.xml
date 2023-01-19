@@ -1,0 +1,17 @@
+<library path="src">
+  <class name="Bag Playback" type="rqt_bag_playback.bag.Bag" base_class_type="rqt_gui_py::Plugin">
+    <description>
+      A Python GUI plugin for displaying and replaying ROS bag files, modded to best fit Car Sensor Recorder.
+    </description>
+    <qtgui>
+      <group>
+        <label>Logging</label>
+        <icon type="theme">folder</icon>
+        <statustip>Plugins related to logging.</statustip>
+      </group>
+      <label>Bag Playback</label>
+      <icon type="theme">applications-other</icon>
+      <statustip>A Python GUI plugin for displaying and replaying ROS bag files, modded to best fit Car Sensor Recorder.</statustip>
+    </qtgui>
+  </class>
+</library>

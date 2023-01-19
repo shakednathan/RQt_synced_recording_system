@@ -1,0 +1,17 @@
+<library path="src">
+  <class name="Ins Display" type="rqt_ins_display.ins_display.InsDisplay" base_class_type="rqt_gui_py::Plugin">
+    <description>
+      A Python GUI plugin for test the functionalities.
+    </description>
+    <qtgui>
+      <group>
+        <label>Topics</label>
+        <icon type="theme">folder</icon>
+        <statustip>Plugins related to Ins.</statustip>
+      </group>
+      <label>"Time and Ins Display"</label>
+      <icon type="theme">applications-other</icon>
+      <statustip>A Python GUI plugin for test the functionalities.</statustip>
+    </qtgui>
+  </class>
+</library>

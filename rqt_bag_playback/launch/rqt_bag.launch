@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="bag playback" default="" doc="bag file to load"/>
+  <node name="rqt_bag_playback" pkg="rqt_bag_playback" type="rqt_bag_playback"
+    args="$(arg bag)"/>
+</launch>

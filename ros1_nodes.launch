@@ -1,0 +1,131 @@
+<?xml version="1.0"?>
+<launch>
+  
+  <!-- VL CAMERA NODES -->
+  
+  <!-- Namespace to publish in -->
+  <arg name="camera" default="camera" />
+  <arg name="guid" default="" />
+  <arg name="ip_address" default="" />
+
+  <!-- Trigger mode: 'streaming' or 'polled' -->
+  <arg name="trigger_mode" default="streaming" />
+
+  <!-- tf frame id associated with this camera -->
+  <arg name="frame_id_vl" default="$(arg camera)_optical_frame" />
+
+  <!-- The camera node -->
+  <node name="$(arg camera)_driver" pkg="prosilica_camera" type="prosilica_node" output="screen">
+    <remap from="camera" to="$(arg camera)" />
+
+    <param name="guid" type="str" value="$(arg guid)" />
+    <param name="ip_address" type="str" value="192.168.10.150" />
+    <param name="trigger_mode" value="$(arg trigger_mode)" />
+    <param name="frame_id" value="$(arg frame_id_vl)" />
+  </node>
+
+  <!-- If running in polled mode, change ns to match your service call argument. -->
+  <group ns="$(arg camera)">
+  </group>
+  
+  <!-- RADAR NODES -->
+  
+  <arg name="esr_name" default="esr"/>
+  <arg name="can_device" default="can0"/>
+
+  <node pkg="radar_interface" type="esr_tracks_can_node" name="esr_tracks_can" ns="$(arg esr_name)" output="screen" >
+        <param name="can_device" value="$(arg can_device)" />
+        <param name="radar_name" value="$(arg esr_name)" />
+  </node>
+  <node pkg="radar_interface" type="vehicle_to_esr_node" name="vehicle_to_esr" ns="$(arg esr_name)" output="screen" >
+        <param name="can_device" value="$(arg can_device)" />
+        <remap from="vehicle_twist" to="/xsens/twist" />
+  </node>
+  <!--
+  <node pkg="radar_interface" type="imu_to_vehicle_node" name="imu_to_vehicle"  output="screen" >
+  </node>
+  -->
+  <node pkg="radar_interface" type="tracks_to_markers_node" name="esr_tracks_to_markers" ns="$(arg esr_name)" output="screen">
+        <remap from="/radar_tracks" to="/$(arg esr_name)/tracks" />
+  </node>  
+
+<!--<node pkg="tf" type="static_transform_publisher" name="base_link_esr" args="0.0 -0.38 0.0 0.0 0.0 0.0 /base_link $(arg esr_name) 40"/>-->
+  <node pkg="tf" type="static_transform_publisher" name="base_link_esr" args="0.0 0.0 0.0 0.0 0.0 0.0 /base_link $(arg esr_name) 40"/>;
+
+  <!-- BOSON IR CAMERA -->
+  
+  <arg name="namespace" default="flir_boson"/>
+  <arg name="frame_id_ir" default="boson_camera"/>
+
+  <!-- the linux file descriptor location for the camera -->
+  <arg name="dev" default="/dev/video0"/>
+
+  <!-- valid values are 30.0 or 60.0 for Bosons -->
+  <arg name="frame_rate" default="60.0"/>
+
+  <!-- valid values are RAW16 or YUV -->
+  <arg name="video_mode" default="YUV"/>
+
+  <!-- valid values are TRUE or FALSE -->
+  <arg name="zoom_enable" default="FALSE"/>
+
+  <!-- valid values are Boson_320 or Boson_640 -->
+  <arg name="sensor_type" default="Boson_640"/>
+
+  <!-- location of the camera calibration file -->
+  <arg name="camera_info_url" default="package://flir_boson_usb/example_calibrations/Boson640.yaml"/>
+
+  <node pkg="flir_boson_usb" type="flir_boson_usb_node" name="flir_boson_usb_node" ns="$(arg namespace)">
+    <param name="frame_id" type="str" value="$(arg frame_id_ir)"/>
+    <param name="dev" type="str" value="$(arg dev)"/>
+    <param name="frame_rate" type="double" value="$(arg frame_rate)"/>
+    <param name="video_mode" type="str" value="$(arg video_mode)"/>
+    <param name="zoom_enable" type="bool" value="$(arg zoom_enable)"/>
+    <param name="sensor_type" type="str" value="$(arg sensor_type)"/>
+    <param name="camera_info_url" type="str" value="$(arg camera_info_url)"/>
+  </node>
+  
+  <!-- INS PUBLISHER -->
+  
+  <node pkg="inertiallabs_ins" type="il_ins" name="INS" output="screen">
+   <param name="ins_url" type="string" value="serial:/dev/ttyS3:115200" />
+   <param name="ins_output_format" type="int" value="82"/>
+  </node>
+  
+  <!-- INNOVIZ LIDAR -->
+  
+  <arg name="config_file_path" default="$(find innoviz_ros)/../../../examples/lidar_configuration_files/om_ignore_blooming_config.json" /> <!-- Innoviz API configuration file -->
+  <arg name="get_attributes_timeout" default="10000"/> <!-- time to wait for device to send attributes -->
+  <arg name="ref0" default="invz_reflection_0"/> <!-- name of the topic that contains the reflection0 points -->
+  <arg name="ref1" default="invz_reflection_1" /> <!-- name of the topic that contains the reflection1 points -->
+  <arg name="ref2" default="invz_reflection_2" /> <!-- name of the topic that contains the reflection2 points -->
+  <arg name="summation" default="invz_summation_reflection" /> <!-- name of the topic that contains the summation points -->
+  <arg name="invz_log_path" default="" /> <!-- the path to which the Innoviz API will write its log -->
+  <arg name="invz_log_level" default="3" /> <!-- Innoviz API log levels: 3 = Warning, 4 = Error, 5 = Fatal, 6 = None -->
+  <arg name="ros_log_level" default="1" /> <!-- log level for ROS logs -->
+  <arg name="recording_file_path" default="" /> <!-- the path to which the device's output will be recorded (empty means no recording) -->
+  <arg name="fpa" default="0.01" /> <!-- false positive alarm rate - used to filter points by certainty of existence (between 0.00012 and 0.05) -->
+  <arg name="frame_id_lidar" default="base_link" /> <!-- point of reference of point cloud -->
+  <arg name="pcl_timestamp_option" default="published"/> <!-- timestamp to put in pcl message - sampled (time), received (time), published (time) -->
+  
+  <node pkg="innoviz_ros" type="Innoviz_one_Device" name="invz_publisher" output="screen">
+    <param name="config_file_path" value="$(arg config_file_path)" />
+    <param name="get_attributes_timeout" type="int" value="$(arg get_attributes_timeout)" />
+    <param name="reflection_0" value="$(arg ref0)" />
+    <param name="reflection_1" value="$(arg ref1)" /> 
+    <param name="reflection_2" value="$(arg ref2)" /> 	
+    <param name="summation_reflection" value="$(arg summation)" /> 	
+    <param name="invz_log_path" value="$(arg invz_log_path)"/>
+    <param name="invz_log_level" type="int" value="$(arg invz_log_level)"/>
+    <param name="ros_log_level" type="int" value="$(arg ros_log_level)"/>
+    <param name="recording_file_path" value="$(arg recording_file_path)" />
+    <param name="false_positive_alarm" type="double" value="$(arg fpa)"/>
+    <param name="frame_id" value="$(arg frame_id_lidar)" />	
+    <param name="pcl_timestamp_option" value="$(arg pcl_timestamp_option)" />	
+  </node>
+  
+  <!-- RQT GUI NODE -->
+  
+  <node name = "unified_gui" pkg = "rqt_gui" type = "rqt_gui" respawn = "false" output = "screen" args = "--perspective-file /home/administrator/CarRecSystem/Car_Sensors_Recording.perspective" />
+  
+</launch>
